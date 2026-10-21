@@ -9,29 +9,29 @@
   "repeats": 5,
   "manual_counter": {
     "seconds": [
-      0.06898740000087855,
-      0.07699719999982335,
-      0.07601900000008754,
-      0.06846070000028703,
-      0.07224980000046344
+      0.07393810000030498,
+      0.07016639999983454,
+      0.07161600000017643,
+      0.07503749999978027,
+      0.07732380000015837
     ],
-    "median_seconds": 0.07224980000046344,
-    "min_seconds": 0.06846070000028703,
-    "max_seconds": 0.07699719999982335,
+    "median_seconds": 0.07393810000030498,
+    "min_seconds": 0.07016639999983454,
+    "max_seconds": 0.07732380000015837,
     "traced_peak_bytes": 680752
   },
   "nabularpy": {
     "seconds": [
-      0.010027199999967706,
-      0.009688399999504327,
-      0.009698099999695842,
-      0.00992949999999837,
-      0.010465700000167999
+      0.012420199999723991,
+      0.015189400000053865,
+      0.011531699999977718,
+      0.011934399999518064,
+      0.01522079999995185
     ],
-    "median_seconds": 0.00992949999999837,
-    "min_seconds": 0.009688399999504327,
-    "max_seconds": 0.010465700000167999,
-    "traced_peak_bytes": 746980
+    "median_seconds": 0.012420199999723991,
+    "min_seconds": 0.011531699999977718,
+    "max_seconds": 0.01522079999995185,
+    "traced_peak_bytes": 747130
   },
   "notes": "Same output checked before timing. Seed20261021,12repeated random missingness templates. Both enumerate observed patterns only. Separate tracemalloc peak excludes some native allocations and is not process RSS."
 }
