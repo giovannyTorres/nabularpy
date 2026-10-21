@@ -1,0 +1,37 @@
+{
+  "python": "3.13.5",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "pandas": "3.0.6",
+  "numpy": "2.5.4",
+  "input_rows": 20000,
+  "input_columns": 32,
+  "observed_patterns": 12,
+  "repeats": 5,
+  "manual_counter": {
+    "seconds": [
+      0.06898740000087855,
+      0.07699719999982335,
+      0.07601900000008754,
+      0.06846070000028703,
+      0.07224980000046344
+    ],
+    "median_seconds": 0.07224980000046344,
+    "min_seconds": 0.06846070000028703,
+    "max_seconds": 0.07699719999982335,
+    "traced_peak_bytes": 680752
+  },
+  "nabularpy": {
+    "seconds": [
+      0.010027199999967706,
+      0.009688399999504327,
+      0.009698099999695842,
+      0.00992949999999837,
+      0.010465700000167999
+    ],
+    "median_seconds": 0.00992949999999837,
+    "min_seconds": 0.009688399999504327,
+    "max_seconds": 0.010465700000167999,
+    "traced_peak_bytes": 746980
+  },
+  "notes": "Same output checked before timing. Seed20261021,12repeated random missingness templates. Both enumerate observed patterns only. Separate tracemalloc peak excludes some native allocations and is not process RSS."
+}
