@@ -1,0 +1,37 @@
+{
+  "python": "3.12.14",
+  "platform": "Linux-6.18.55-x86_64-with-glibc2.41",
+  "pandas": "3.0.6",
+  "numpy": "2.5.4",
+  "input_rows": 20000,
+  "observed_groups": 2000,
+  "measured_columns": 8,
+  "repeats": 5,
+  "manual_group_slicing": {
+    "seconds": [
+      1.1474219410000046,
+      1.246792260999996,
+      1.2703433670000095,
+      1.2908619400000134,
+      1.3215453610000054
+    ],
+    "median_seconds": 1.2703433670000095,
+    "min_seconds": 1.1474219410000046,
+    "max_seconds": 1.3215453610000054,
+    "traced_peak_bytes": 8336916
+  },
+  "nabularpy": {
+    "seconds": [
+      0.0026530410000020765,
+      0.0025405010000270067,
+      0.002897609999990891,
+      0.0023739610000177436,
+      0.00217485999999667
+    ],
+    "median_seconds": 0.0025405010000270067,
+    "min_seconds": 0.00217485999999667,
+    "max_seconds": 0.002897609999990891,
+    "traced_peak_bytes": 2620697
+  },
+  "notes": "Full output equivalence checked before timing. Seed20261021; 20% independent missingness. Both measurements include long-form output construction. Separate tracemalloc runs exclude some native allocations and are not process RSS."
+}

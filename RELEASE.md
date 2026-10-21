@@ -1,6 +1,7 @@
 # Release procedure and publication state
 
-Current version: **0.1.0**. **PyPI: PUBLISHED** at
+Prepared version: **0.1.1**, pending publication and a fresh public-index install.
+Last verified PyPI publication: **0.1.0** at
 [nabularpy 0.1.0](https://pypi.org/project/nabularpy/0.1.0/).
 Installation from the public index was verified in a fresh environment, including
 `pip check`, both executable examples, wheel hash and installed source identity.

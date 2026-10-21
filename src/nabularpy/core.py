@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import Any, cast
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -124,36 +124,43 @@ def missing_by(
         raise MissingDataError("group must contain distinct existing string column names")
     if set(keys).intersection(metadata):
         raise MissingDataError("Group names collide with summary metadata; rename group columns")
-    records: list[dict[str, Any]] = []
-    null_group = object()  # An internal identity token cannot collide with data strings.
-    segments: dict[tuple[Any, ...], list[int]] = {}
     try:
-        for pos, values in enumerate(data.loc[:, keys].itertuples(index=False, name=None)):
-            key = tuple(
-                null_group if pd.api.types.is_scalar(value) and bool(pd.isna(value)) else value
-                for value in values
-            )
-            segments.setdefault(key, []).append(pos)
-        for positions in segments.values():
-            segment = data.iloc[positions]
-            # Pandas groupby can coerce an object-backed large integer/null key
-            # index to float. Read original scalar labels, never inferred keys.
-            labels = tuple(data[key].iloc[positions[0]] for key in keys)
-            measured = segment if include_group else segment.drop(columns=keys)
-            for summary in missing_summary(measured).to_dict("records"):
-                records.append(
-                    {
-                        **dict(zip(keys, labels, strict=True)),
-                        **cast(dict[str, Any], summary),
-                        "n_rows": len(segment),
-                    }
-                )
+        # Factorize each original column before combining keys. Constructing a
+        # group index from raw labels can round object-backed large integers
+        # beside nulls. Integer codes also include nulls and only observed levels.
+        key_codes = [pd.factorize(data[key], sort=False, use_na_sentinel=False)[0] for key in keys]
+        codes = (
+            key_codes[0]
+            if len(keys) == 1 or len(data) == 0
+            else pd.factorize(pd.MultiIndex.from_arrays(key_codes), sort=False)[0]
+        )
     except TypeError as exc:
         raise MissingDataError(f"Group values must be hashable: {exc}") from exc
-    result = pd.DataFrame(records, columns=[*keys, *metadata], dtype=object)
-    return result.astype(
-        {"n_rows": "int64", "missing": "int64", "present": "int64", "percentage": float}
+    measured = data if include_group else data.drop(columns=keys)
+    width = len(measured.columns)
+    _, first = np.unique(codes, return_index=True)
+    sizes = np.bincount(codes).astype(np.int64, copy=False)
+    counts = measured.isna().groupby(codes, sort=False).sum().to_numpy(dtype=np.int64)
+    # Construct the long form once, preserving exact original labels and the
+    # established object dtype for group/variable fields, even on empty inputs.
+    result = {
+        key: pd.Series(data[key].iloc[first].to_numpy(dtype=object).repeat(width), dtype=object)
+        for key in keys
+    }
+    result["variable"] = pd.Series(
+        np.tile(measured.columns.to_numpy(dtype=object), len(sizes)), dtype=object
     )
+    n_rows = np.repeat(sizes, width)
+    missing = counts.reshape(-1)
+    result.update(
+        {
+            "n_rows": pd.Series(n_rows, dtype="int64"),
+            "missing": pd.Series(missing, dtype="int64"),
+            "present": pd.Series(n_rows - missing, dtype="int64"),
+            "percentage": pd.Series(missing * np.repeat(100.0 / sizes, width), dtype=float),
+        }
+    )
+    return pd.DataFrame(result, columns=[*keys, *metadata])
 
 
 @dataclass(frozen=True)

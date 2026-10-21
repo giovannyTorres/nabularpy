@@ -26,3 +26,21 @@ almost every row has a unique pattern, very narrow tables, or different dtypes
 can behave differently. Results describe one seeded synthetic workload; no
 universal runtime or memory advantage is claimed. Cooccurrence and grouped
 analysis are separate operations and are not timed by this benchmark.
+
+## High-cardinality grouped summaries
+
+```bash
+python benchmarks/grouped.py --rows 20000 --groups 2000 --columns 8 --repeat 5
+```
+
+The grouped benchmark uses 2,000 first-observed integer segments and eight
+measured columns with independently sampled 20% missingness. It checks the entire
+long-form result against a per-group slicing and summary recipe before timing.
+Both paths include output construction; the recipe represents the repeated
+DataFrame work removed in 0.1.1. The optimized path factorizes keys once and sums
+the missingness mask across integer group codes.
+
+[grouped-results.json](grouped-results.json) records repeated timings and separate
+traced allocation peaks. This synthetic case emphasizes many small groups;
+different group sizes, column widths and dtypes can change the relative benefit.
+No timing threshold is asserted in tests.
