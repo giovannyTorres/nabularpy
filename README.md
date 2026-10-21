@@ -17,13 +17,14 @@ print(report.cooccurrence())
 
 ## Install
 
-Python 3.11+, Pandas 2.2+ and NumPy 1.26+ are required. Until the initial PyPI
-publication is verified, install from a checkout:
+Python 3.11+, Pandas 2.2+ and NumPy 1.26+ are required. Version
+[0.1.0 is published on PyPI](https://pypi.org/project/nabularpy/0.1.0/), with
+installation from the public index verified in a fresh environment.
 
 ```bash
-python -m pip install .
-# After the first verified PyPI release:
 python -m pip install nabularpy
+# Reproduce the verified release:
+python -m pip install "nabularpy==0.1.0"
 # Optional plotting:
 python -m pip install "nabularpy[plot]"
 ```
