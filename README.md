@@ -1,164 +1,103 @@
 # nabularpy
 
-Turn missingness into inspectable data: observed patterns, boolean shadow
-columns, per-segment summaries and integer cooccurrence counts. Plotting is
-optional; structured tables are the primary output.
+**Make missing-data patterns and segment differences inspectable as tables.**
+
+A form export has missing age and income values, but column totals do not show which fields disappear together or whether a form version is affected. nabularpy returns observed patterns, shadow columns and segment summaries.
+
+## Try it in two minutes
+
+Requires Python 3.11+ with pandas 2.2+. Install the [published release](https://pypi.org/project/nabularpy/0.1.1/):
+
+```sh
+python -m pip install "nabularpy==0.1.1"
+```
+
+Copy this complete example into a Python session or save it as `demo.py` and run `python demo.py`:
 
 ```python
 import pandas as pd
+
 import nabularpy as nb
 
-data = pd.DataFrame({"age": [30, None, None], "income": [100, None, 200]})
+data = pd.DataFrame(
+    {"region": ["N", "N", "S"], "age": [30, None, None], "income": [100, None, 200]}
+)
 report = nb.inspect(data)
 print(report.summary())
 print(report.patterns())
 print(report.cooccurrence())
+assert report.cooccurrence().loc["age", "income"] == 1
+assert nb.missing_by(data, group="region")["missing"].tolist() == [1, 1, 1, 0]
 ```
 
-## Install
+The example finds **one jointly missing age/income row** and retains all three observed missingness patterns.
 
-Python 3.11+, Pandas 2.2+ and NumPy 1.26+ are required. Version
-[0.1.0 is published on PyPI](https://pypi.org/project/nabularpy/0.1.0/), with
-installation from the public index verified in a fresh environment.
+## What you gain
 
-```bash
-python -m pip install nabularpy
-# Reproduce the verified release:
-python -m pip install "nabularpy==0.1.0"
-# Optional plotting:
-python -m pip install "nabularpy[plot]"
-```
+A consistent structured workflow combines deterministic observed patterns, shadow indicators, null-inclusive segments and integer cooccurrence counts. Plotting dependencies remain optional.
 
-There are no runtime services, telemetry or sibling-project dependencies.
-Importing the package does not import Matplotlib.
+| Existing approach | What this package adds | Tradeoff |
+|---|---|---|
+| Pandas `isna` and grouping provide primitives; missingno offers richer plots and pyampute provides additional missingness tools. | A shared report interface, row summaries, explicit label/collision policies, observed/null segment handling and optional plotting. | Mask snapshots require O(rows × columns) memory and a requested cooccurrence matrix requires O(columns²). A simple `isna().sum()` is enough for column totals alone. |
 
-## API and output schemas
+[Run the side-by-side comparison](docs/comparison.md): both implementations are included and their shared outputs are asserted equal. [naniar](https://naniar.njtierney.com/) inspires shadow structures and tidy missingness summaries. These are descriptive workflows. Little's MCAR test and other inferential statistics are outside this release.
 
-| API | Output |
+## Solve a real workflow problem
+
+These small, synthetic operational fixtures make the workflows reproducible without external services or private records. Each recipe includes expected results and a failure or interpretation boundary.
+
+| Recipe | Verified outcome |
 |---|---|
-| `missing_summary(data)` | `variable`, `missing`, `present`, `percentage` per column |
-| `missing_patterns(data)` | `pattern`, `count`, `percentage`, `n_missing` for observed patterns |
-| `shadow(data, suffix="_NA", bind=False)` | Boolean indicators; True means missing |
-| `missing_by(data, group="region", include_group=False)` | Group fields, `variable`, `n_rows`, `missing`, `present`, `percentage` |
-| `inspect(data)` | Snapshot `MissingReport` |
-| `report.summary()` / `report.patterns()` | Same structured column/pattern summaries |
-| `report.row_summary()` | `missing`, `present`, `percentage` per row; original index preserved |
-| `report.cooccurrence()` | Integer jointly missing counts for every variable pair |
-| `report.missing_by(group, include_group=False)` | Segments from the captured snapshot |
-| `report.plot(ax=None)` | Optional column-percentage bar plot; returns Matplotlib Axes |
+| [Find a form-version data-collection issue](docs/cookbook.md#compare-form-versions) | Compare per-field percentages by version; verify 50% missing income in v1 and retain the unknown-version group. |
+| [Identify fields that disappear together](docs/cookbook.md#discover-jointly-missing-fields) | Inspect the three observed patterns and verify the joint count is 1. |
+| [Compare observed records using shadow indicators](docs/cookbook.md#compare-observed-age) | Bind boolean missingness indicators and compare observed mean ages: 20 with income present, 35 with income absent. |
 
-Missingness follows Pandas `isna`: None, NaN, pandas.NA and NaT count according
-to their dtype semantics. Empty strings, literal `"NA"` and infinity are values;
-this library does not silently reinterpret them as missing. Inputs require
-unique flat column labels. Nonstring labels are retained in structured outputs;
-duplicate or MultiIndex column labels raise `MissingDataError`.
+From a checkout, after installing the package:
 
-The report captures data and mask snapshots. Changing original frames or
-returned result tables does not change later report summaries. No operation
-imputes, deletes or changes input values. Avoid concurrent mutation or editing
-mutable objects inside cells while preparing a report.
-
-## Observed patterns and count association
-
-`pattern` is a tuple of absent original column labels in input column order;
-`()` denotes a complete record. Rows sort by descending count, with ties ordered
-by first observed occurrence. Percentages use total input rows. Only observed
-row patterns are stored using exact packed bit vectors; the implementation
-never enumerates 2**p theoretical combinations. Packed keys are exact bytes,
-not probabilistic hashes. The mask costs O(n×p), and the number of returned
-patterns is bounded by the number of rows.
-
-`cooccurrence()` counts rows in which both variables are absent. Its diagonal
-equals per-variable missing counts, and its values are integer counts rather
-than boolean dot products. The output uses O(p²) space and is computed only
-when requested. Cooccurrence counts are descriptive association, not correlation
-coefficients or hypothesis-test results.
-
-Empty inputs have zero counts/percentages and no observed patterns. A table
-with n>0 rows and zero columns has one complete pattern `()` with count n;
-row missing percentages are defined as zero. These conventions avoid undefined
-percentages and preserve record counts.
-
-## Shadows and segments
-
-```python
-bound = nb.shadow(data, bind=True)
-print(bound.groupby("income_NA")["age"].mean())
+```sh
+python examples/comparison.py
+python examples/cookbook.py
 ```
 
-This lets an analyst compare observed characteristics of records with and
-without a missing variable. The comparison describes observed records; it does
-not establish a cause for missingness.
+## Measured performance, accuracy and usability
 
-Shadow names use the original label's string representation plus a nonempty
-suffix. Generated-name duplicates are rejected, as are collisions with original
-columns when `bind=True`. Binding preserves the original index, including
-duplicate labels, and all original data columns. Choose another suffix or
-rename ambiguous labels explicitly.
+Recorded on Windows-11-10.0.26200-SP0, CPython 3.13.5, with five rotating timed rounds. At the largest measured input size (20,000; see workload definition):
 
-`missing_by` accepts a string or sequence of existing string column names.
-It retains null-valued groups, includes only observed categorical combinations,
-and preserves first-observed group order. No public sentinel string replaces
-nulls, so a literal `"<missing>"` remains a separate group. Group identity and
-labels preserve exact object-backed large integers. Group fields are excluded
-from measured variables unless `include_group=True`.
+| Compared operation | Baseline median ms | Package median ms | Package / baseline |
+|---|---:|---:|---:|
+| Package / manual recipe | 68.223 | 9.628 | 0.14x |
 
-Grouping names colliding with `variable`, `n_rows`, `missing`, `present` or
-`percentage` raise an explicit error rather than overwrite metadata. Group
-values must be hashable. A table containing only excluded group columns returns
-an empty long-form summary.
+Ratio = package median / baseline median; above 1 means higher latency. The package performs the extra diagnostic or provenance work described above. These single-host synthetic results have no universal speed guarantee. Allocation measurements and the smaller scales are in the full table.
 
-## Optional visualization and statistical scope
+[Measured table](benchmarks/RESULTS.md) · [Raw repeated samples](benchmarks/latest.json) · [Reproduction instructions](benchmarks/README.md)
 
-With the `plot` extra installed, `report.plot()` draws missing percentages.
-Matplotlib is imported lazily; a supplied `ax` is reused. No figure is displayed
-or saved automatically. All analysis works without plotting dependencies.
+Accuracy means agreement on the stated fixture outputs: Complete pattern frames are compared, including counts, percentages, original labels, missing-variable counts and tie order. Code-size counts are an inspectable usability proxy; no developer-time study was performed.
 
-Little's MCAR test is deliberately omitted from 0.1.0 because a new numerical
-implementation has not been rigorously verified against independent references.
-[naniar](https://naniar.njtierney.com/reference/mcar_test.html) and
-[pyampute](https://rianneschouten.github.io/pyampute/build/html/pyampute.exploration.html)
-already document such tests. Pattern counts and observed segment differences
-alone cannot classify data as MCAR, MAR or MNAR. This library provides
-description and observed association, without causal or inferential claims.
+## Scope and limits
 
-## Alternatives, limitations and examples
+- Missingness follows pandas.isna; empty strings, the literal "NA" and infinity remain values.
+- Inputs need unique flat column labels. Shadow name collisions raise an explicit error.
+- Only observed patterns are counted. High-dimensional inputs can still have many distinct observed patterns.
+- Observed associations do not establish a missingness mechanism, causality or statistical significance.
 
-[naniar](https://github.com/njtierney/naniar) inspired shadow structures and tidy
-missingness summaries. [missingno](https://github.com/residentmario/missingno)
-already provides richer Python missing-data plots, and pyampute already analyzes
-patterns. Pandas and Polars supply missingness primitives. nabularpy combines
-the structured workflow, deterministic policies and explicit label preservation
-in a small API; see [RESEARCH.md](RESEARCH.md). It claims no feature novelty or
-affiliation with those projects.
+## Documentation
 
-This release supports in-memory Pandas data, with no Polars adapter, imputation,
-inference, automatic sentinel conversion or persistent report storage. Dense
-masks and pairwise matrices still require memory for large tables. See
-[examples/quickstart.py](examples/quickstart.py) and
-[examples/segment_association.py](examples/segment_association.py) for executable
-workflows, including null-valued segments.
+- [Start here](docs/index.md): choose a workflow and find the relevant guide.
+- [Comparison and alternatives](docs/comparison.md): full code, shared behavior and added outputs.
+- [Cookbook](docs/cookbook.md): three complete problem-solving recipes.
+- [API and behavioral contracts](docs/api.md): exact semantics and errors.
+- [Benchmark methodology](benchmarks/README.md): inputs, correctness checks, environment and limits.
+- [Research and upstream credit](RESEARCH.md): R inspiration, existing Python tools and scope decisions.
 
-## Validation and benchmark
+## Develop and validate
 
-```bash
+```sh
 python -m pip install -e ".[dev]"
-python -m pytest --cov=nabularpy --cov-report=term-missing
+python scripts/check_docs.py
+python -m pytest
 python -m ruff check .
+python -m ruff format --check .
 python -m mypy src
-python examples/quickstart.py
-python examples/segment_association.py
-python benchmarks/benchmark.py --rows 20000 --columns 32 --repeat 5
 ```
 
-Tests include independent Counter/pairwise references, generated patterns,
-wide/empty tables, categorical and null groups, exact large integer labels,
-shadow collisions, snapshot preservation and headless optional plotting.
-[Raw measurements](benchmarks/results.json) compare equivalent pattern output
-with a manual Pandas/Counter recipe. Five repetitions follow warmup; memory is
-measured separately with tracemalloc. See [methodology](benchmarks/README.md)
-for limitations and environment. No universal performance advantage is claimed.
-
-See [CONTRIBUTING.md](CONTRIBUTING.md). Original code is MIT licensed. For 0.2.0,
-priorities are bounded pattern output, conditional structured comparisons and
-streamed mask aggregation; inferential tests require a separate validation plan.
+MIT licensed. Contributions should include a reproducing example and the expected behavior. See [CONTRIBUTING.md](CONTRIBUTING.md).

@@ -1,0 +1,178 @@
+{
+  "schema_version": 1,
+  "generated_at_utc": "2026-10-22T05:56:28.674898+00:00",
+  "package": "nabularpy",
+  "versions": {
+    "nabularpy": "0.1.1",
+    "pandas": "3.0.6",
+    "numpy": "2.5.4"
+  },
+  "python": "3.13.5",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "machine": "AMD64",
+  "processor": "AMD64 Family 25 Model 80 Stepping 0, AuthenticAMD",
+  "logical_cpus": 16,
+  "base_commit": "1c609f95cab96fc00005df4c3fdcc903355777bc",
+  "source_sha256_lf": {
+    "benchmarks/reproduce.py": "a9b178faadff0699cb249b248e196dd23985405a82d792074421597a4769a01a",
+    "benchmarks/benchmark.py": "9e90949eb4e21aa25e948b82edb118ed1a417ef3d9b80950f7ae4d4f0f361c9e",
+    "examples/comparison.py": "0e8a7512f599f88ad8abfb5b445d309cb5bf89cdb01e01f77970ea65f7cf084a",
+    "examples/cookbook.py": "b2cf27823dc430609ca409a23b50a0bff2c5327754be9262d5746db964f19864"
+  },
+  "command": "python benchmarks/reproduce.py --repeat 5",
+  "quick": false,
+  "repeats": 5,
+  "warmup_per_operation": 2,
+  "memory_repeats": 2,
+  "methodology": {
+    "time": "interleaved rotating order; perf_counter; GC collection before sample outside timer; input construction excluded",
+    "memory": "separate tracemalloc passes, result alive; Python allocation peak, not total RSS; input construction excluded",
+    "accuracy": "differential assertions before timing; comparison and cookbook assertions also executed",
+    "ease_of_use": "physical lines and AST statements in comparison functions, excluding fixtures and imports; a code-size proxy, not a user study",
+    "limitations": "deterministic synthetic workloads; one host; diagnostics differ in scope; no statistical confidence intervals or R execution comparison"
+  },
+  "comparison_code_size": {
+    "baseline": {
+      "physical_lines": 14,
+      "statements": 3
+    },
+    "library": {
+      "physical_lines": 2,
+      "statements": 1
+    }
+  },
+  "workloads": [
+    {
+      "input_size": 1000,
+      "accuracy": {
+        "observed_patterns": 12,
+        "columns": 32,
+        "all_output_fields_equal": true
+      },
+      "measurements": {
+        "baseline": {
+          "seconds": [
+            0.005410499999925378,
+            0.004716399999779242,
+            0.0051625999994939775,
+            0.004538000000138709,
+            0.004572200000438897
+          ],
+          "median_seconds": 0.004716399999779242,
+          "min_seconds": 0.004538000000138709,
+          "max_seconds": 0.005410499999925378,
+          "traced_peak_bytes": [
+            142800,
+            145616
+          ],
+          "median_peak_bytes": 144208.0
+        },
+        "nabularpy": {
+          "seconds": [
+            0.0014718000002176268,
+            0.001782199999979639,
+            0.0014643000004070927,
+            0.0014295000000856817,
+            0.0014300000002549496
+          ],
+          "median_seconds": 0.0014643000004070927,
+          "min_seconds": 0.0014295000000856817,
+          "max_seconds": 0.001782199999979639,
+          "traced_peak_bytes": [
+            72080,
+            72314
+          ],
+          "median_peak_bytes": 72197.0
+        }
+      }
+    },
+    {
+      "input_size": 5000,
+      "accuracy": {
+        "observed_patterns": 12,
+        "columns": 32,
+        "all_output_fields_equal": true
+      },
+      "measurements": {
+        "baseline": {
+          "seconds": [
+            0.020199500000671833,
+            0.018355899999733083,
+            0.01932699999997567,
+            0.0179480999995576,
+            0.018445499999870663
+          ],
+          "median_seconds": 0.018445499999870663,
+          "min_seconds": 0.0179480999995576,
+          "max_seconds": 0.020199500000671833,
+          "traced_peak_bytes": [
+            593752,
+            596568
+          ],
+          "median_peak_bytes": 595160.0
+        },
+        "nabularpy": {
+          "seconds": [
+            0.0038461000003735535,
+            0.003628499999649648,
+            0.0033542000001034467,
+            0.0034890999995695893,
+            0.003350799999680021
+          ],
+          "median_seconds": 0.0034890999995695893,
+          "min_seconds": 0.003350799999680021,
+          "max_seconds": 0.0038461000003735535,
+          "traced_peak_bytes": [
+            216491,
+            216632
+          ],
+          "median_peak_bytes": 216561.5
+        }
+      }
+    },
+    {
+      "input_size": 20000,
+      "accuracy": {
+        "observed_patterns": 12,
+        "columns": 32,
+        "all_output_fields_equal": true
+      },
+      "measurements": {
+        "baseline": {
+          "seconds": [
+            0.07132459999957064,
+            0.0682225999998991,
+            0.07566920000044774,
+            0.06738679999943997,
+            0.06818579999981011
+          ],
+          "median_seconds": 0.0682225999998991,
+          "min_seconds": 0.06738679999943997,
+          "max_seconds": 0.07566920000044774,
+          "traced_peak_bytes": [
+            1490088,
+            1492904
+          ],
+          "median_peak_bytes": 1491496.0
+        },
+        "nabularpy": {
+          "seconds": [
+            0.009834399999817833,
+            0.009449099999983446,
+            0.009627799999179842,
+            0.009603399999832618,
+            0.010008499999457854
+          ],
+          "median_seconds": 0.009627799999179842,
+          "min_seconds": 0.009449099999983446,
+          "max_seconds": 0.010008499999457854,
+          "traced_peak_bytes": [
+            756391,
+            756582
+          ],
+          "median_peak_bytes": 756486.5
+        }
+      }
+    }
+  ]
+}

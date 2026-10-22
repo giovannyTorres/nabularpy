@@ -1,46 +1,58 @@
-# Reproducible observed-pattern benchmark
+# Reproduce the nabularpy benchmarks
 
-```bash
-python benchmarks/benchmark.py --rows 20000 --columns 32 --repeat 5
+[Measured results](RESULTS.md) · [Raw measurements](latest.json) · [Driver](reproduce.py)
+
+## One-command measurement
+
+Clone this repository and use CPython 3.13.5 to reproduce the recorded environment. From the repository root:
+
+```sh
+python -m pip install -r benchmarks/requirements.txt
+python benchmarks/reproduce.py
 ```
 
-NumPy generator seed 20261021 creates twelve random missingness templates and
-repeats them across 20,000 rows and 32 columns. Continuous observed values are
-otherwise irrelevant to pattern counting. The script checks complete output
-equivalence before measuring either implementation.
+The requirements file pins the public package and runtime dependencies measured in this run. To benchmark a changed checkout instead, install it with `python -m pip install -e .` after those pins and record that difference. The driver records the imported distribution version, base commit and SHA-256 digests of the benchmark and example sources with line endings normalized to LF.
 
-The manual reference uses Pandas isna, original missing-label tuples and Python
-Counter.most_common. Both implementations count only observed patterns. The
-library uses exact packed bit vectors and constructs label tuples once per
-observed pattern. This is a narrow pattern-aggregation comparison, not a claim
-that Python lacks a structured missingness implementation.
+The default run writes `benchmarks/latest.json` and regenerates `benchmarks/RESULTS.md`. It runs all comparison and cookbook assertions first, then checks each timed workload against its reference. A failing comparison aborts before publishing new measurements.
 
-Each workflow warms up once; five independent perf_counter durations follow.
-A separate tracemalloc run records peak traced Python allocation, excluding
-some native allocations and not measuring process RSS. [results.json](results.json)
-contains the latest environment, complete samples, median, minimum, maximum
-and memory values, and is authoritative after rerunning.
-
-Repeated templates favor efficient observed-pattern aggregation. Datasets where
-almost every row has a unique pattern, very narrow tables, or different dtypes
-can behave differently. Results describe one seeded synthetic workload; no
-universal runtime or memory advantage is claimed. Cooccurrence and grouped
-analysis are separate operations and are not timed by this benchmark.
-
-## High-cardinality grouped summaries
-
-```bash
-python benchmarks/grouped.py --rows 20000 --groups 2000 --columns 8 --repeat 5
+```sh
+# Small correctness/runner smoke check; writes only ignored smoke.json:
+python benchmarks/reproduce.py --quick
+# More observations on the same three sizes:
+python benchmarks/reproduce.py --repeat 9
 ```
 
-The grouped benchmark uses 2,000 first-observed integer segments and eight
-measured columns with independently sampled 20% missingness. It checks the entire
-long-form result against a per-group slicing and summary recipe before timing.
-Both paths include output construction; the recipe represents the repeated
-DataFrame work removed in 0.1.1. The optimized path factorizes keys once and sums
-the missingness mask across integer group codes.
+## Inputs and equivalent work
 
-[grouped-results.json](grouped-results.json) records repeated timings and separate
-traced allocation peaks. This synthetic case emphasizes many small groups;
-different group sizes, column widths and dtypes can change the relative benefit.
-No timing threshold is asserted in tests.
+n rows, 32 columns and 12 repeated missingness templates, generated with NumPy seed 20261021. Only observed patterns are aggregated by both implementations.
+
+The input generator is deterministic and included in the driver. Input construction, package imports, correctness assertions and output serialization are outside the measured operation. The fixture setup and reused state are the same for both compared operations.
+
+Complete pattern frames are compared, including counts, percentages, original labels, missing-variable counts and tie order.
+
+Twelve repeated templates favor aggregation and do not represent near-unique patterns in a very wide table. Faster results here do not imply a win over every pandas implementation.
+
+## Timing and memory
+
+- Two warmups per operation, then five timed rounds by default.
+- Interleaved operations with a rotating starting order reduce fixed-order drift.
+- `perf_counter` measures elapsed time; garbage collection happens before each sample and outside its timer.
+- The standard paired driver retains the returned object until the timer stops. The whyempty six-scenario driver times batches of three operations; its full implementation is in benchmark.py.
+- Allocation peaks use two separate `tracemalloc` passes with a live result. They exclude the already constructed inputs and can exclude native allocations; they are not total process RSS.
+- Raw observations, medians, minimum/maximum times, package/Python/platform/CPU details and checked fixture outcomes are in latest.json. Whyempty retains the original six-scenario raw schema and computes its medians there.
+
+Run on an otherwise idle machine. Results vary with host load, CPU state, allocator, Python, dependency versions, data cardinality, width and dtype. These are single-host measurements with no confidence intervals. They are not service-level guarantees or a comparison against every possible optimized recipe.
+
+## Accuracy and ease of use
+
+Accuracy here means asserted agreement on the documented output fields, not a statistical significance claim or proof over all inputs. The core tests cover additional boundary cases and can be rerun with `python -m pip install -e ".[dev]"` followed by `python -m pytest`.
+
+The driver counts physical lines and AST statements in the checked comparison functions. Fixtures, imports and assertion scaffolding are excluded. This code-size proxy is inspectable; it does not measure learning time or productivity. The library may perform more diagnostic work and may take more source lines in a given example.
+
+## Historical and specialized runs
+
+The original `benchmark.py` and `results.json` are retained with their original workload and environment. `RESULTS.md` and `latest.json` identify the new measurements. Other benchmark scripts in this directory cover specialized cases and are not silently combined into the main table.
+
+Mask snapshots require O(rows × columns) memory and a requested cooccurrence matrix requires O(columns²). A simple `isna().sum()` is enough for column totals alone.
+
+[What the package adds](../docs/comparison.md) · [Practical recipes](../docs/cookbook.md)
