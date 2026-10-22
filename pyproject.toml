@@ -44,7 +44,7 @@ Changelog = "https://github.com/giovannyTorres/nabularpy/blob/main/CHANGELOG.md"
 packages = ["src/nabularpy"]
 
 [tool.hatch.build.targets.sdist]
-include = ["src", "tests", "examples", "benchmarks", "scripts", ".github", "*.md", "LICENSE", "pyproject.toml"]
+include = ["src", "tests", "examples", "benchmarks", "docs", "scripts", ".github", "*.md", "LICENSE", "pyproject.toml"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
